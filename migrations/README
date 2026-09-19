@@ -1,0 +1,61 @@
+Vybe Backend: migrations and local development
+
+Run all commands from the project root:
+
+	D:\Desktop\Vybe_backend
+
+Setup
+-----
+
+Create and activate the virtual environment on Windows:
+
+	python -m venv venv
+	venv\Scripts\activate
+	python -m pip install -r requirements
+
+Set the database URL in the root .env file. Because the application uses
+SQLAlchemy's async engine, use the async PostgreSQL driver:
+
+	DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/vybe
+
+Create a migration
+------------------
+
+After changing a model, generate a migration from the model metadata:
+
+	python -m alembic revision --autogenerate -m "describe the change"
+
+Review the generated file in migrations/versions before applying it.
+
+Run migrations
+--------------
+
+Apply all pending migrations:
+
+	python -m alembic upgrade head
+
+Check the current database revision or migration history:
+
+	python -m alembic current
+	python -m alembic history
+
+Undo the latest migration:
+
+	python -m alembic downgrade -1
+
+Run the application
+-------------------
+
+Start the FastAPI development server with automatic reload:
+
+	python -m uvicorn app.main:app --reload
+
+This requires app/main.py to define the FastAPI application as `app`, for
+example:
+
+	from fastapi import FastAPI
+
+	app = FastAPI()
+
+The API is then available at http://127.0.0.1:8000 and its Swagger docs are
+available at http://127.0.0.1:8000/docs.

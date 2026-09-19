@@ -6,3 +6,4 @@ pydantic-settings
 bcrypt
 email-validator
 alembic
+asyncpg
