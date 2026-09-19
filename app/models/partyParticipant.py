@@ -7,6 +7,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 import uuid
+from enum import Enum
+
+class PartyParticipantRole(str, Enum):
+    HOST = "host"
+    GUEST = "guest"
 
 
 class PartyParticipant(Base):
@@ -25,6 +30,12 @@ class PartyParticipant(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("user.id"),
         nullable=False
+    )
+    
+    role: Mapped[PartyParticipantRole] = mapped_column(
+        SQLEnum(PartyParticipantRole),
+        nullable=False,
+        default=PartyParticipantRole.GUEST
     )
 
     __table_args__ = (
