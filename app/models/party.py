@@ -9,14 +9,15 @@ from sqlalchemy.orm import Mapped, mapped_column
 import uuid
 
 class Party(Base):
-    __tablename__ = "partys"    
+    __tablename__ = "party"    
 
     id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True
+        primary_key=True,
+        default=uuid.uuid4
     )
     
     hosted_by: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id"),
+        ForeignKey("user.id"),
         nullable=False
     )
     

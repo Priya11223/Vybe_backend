@@ -10,19 +10,20 @@ import uuid
 
 
 class PartyParticipant(Base):
-    __tablename__ = "party_participants"
+    __tablename__ = "party_participant"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True
+        primary_key=True,
+        default=uuid.uuid4
     )
     
     party_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("partys.id"),
+        ForeignKey("party.id"),
         nullable=False
     )
     
     user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id"),
+        ForeignKey("user.id"),
         nullable=False
     )
 

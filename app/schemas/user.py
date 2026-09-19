@@ -22,6 +22,7 @@ class UserLogin(BaseModel):
     password: str = Field(min_length=8, max_length=255)
     
 class UserUpdate(BaseModel):
+    id: uuid.UUID | None = Field(default=None)
     name: str | None = Field(default=None, min_length=1, max_length=100)
     email: EmailStr | None = Field(default=None)
     password: str | None = Field(default=None, min_length=8, max_length=255)
