@@ -2,11 +2,11 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 import uuid
 
 class PartyCreate(BaseModel):
-    host_id: uuid.UUID
+    hosted_by: uuid.UUID
     
 class PartyResponse(BaseModel):
     id: uuid.UUID
-    host_id: uuid.UUID
+    hosted_by: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
     

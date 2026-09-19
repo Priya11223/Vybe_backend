@@ -15,6 +15,11 @@ class PartyRepository(BaseRepository[Party]):
     
     async def create(self, party: Party) -> Party:
         self.session.add(party)
-        await self.session.flush()
+        await self.session.commit()
         await self.session.refresh(party)
         return party
+    
+    async def delete(self, party: Party) -> bool:
+        await self.session.delete(party)
+        await self.session.commit()
+        return True
