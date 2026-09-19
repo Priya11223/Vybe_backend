@@ -15,6 +15,11 @@ class PartyParticipantRepository(BaseRepository[PartyParticipant]):
     
     async def create(self, participant: PartyParticipant) -> PartyParticipant:
         self.session.add(participant)
-        await self.session.flush()
+        await self.session.commit()
         await self.session.refresh(participant)
         return participant
+    
+    async def delete(self, participant: PartyParticipant) -> bool:
+        await self.session.delete(participant)
+        await self.session.commit()
+        return True

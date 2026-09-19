@@ -9,7 +9,7 @@ router = APIRouter(prefix="/users", tags=["User"])
 async def create_user(user: UserCreate, user_service: UserService = Depends(get_user_service)):
     return await user_service.create_user(user)
 
-@router.get("/id/{id}", response_model=UserResponse, status_code=status.HTTP_200_OK)
+@router.get("/{id}", response_model=UserResponse, status_code=status.HTTP_200_OK)
 async def get_user_by_id(id: str, user_service: UserService = Depends(get_user_service)):
     try:
         user = await user_service.get_user_by_id(id)
