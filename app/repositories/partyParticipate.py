@@ -23,3 +23,20 @@ class PartyParticipantRepository(BaseRepository[PartyParticipant]):
         await self.session.delete(participant)
         await self.session.commit()
         return True
+
+    async def get_all_participants_in_party(self, party_id: str) -> list[PartyParticipant] | None:
+        query = select(PartyParticipant).where(PartyParticipant.party_id == party_id)
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_all_parties_for_user(self, user_id: str) -> list[PartyParticipant] | None:
+        query = select(PartyParticipant).where(PartyParticipant.user_id == user_id)
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_by_user_id_and_party_id(self, user_id: str, party_id: str) -> PartyParticipant | None:
+        query = select(PartyParticipant).where(PartyParticipant.user_id == user_id, PartyParticipant.party_id == party_id)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+    
+    

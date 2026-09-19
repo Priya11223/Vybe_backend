@@ -28,3 +28,23 @@ async def delete_party_participant(id: str, partyParticipant_service: PartyParti
         raise e
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.get("/{party_id}/all", response_model=list[PartyParticipantResponse], status_code=status.HTTP_200_OK)
+async def get_all_participants_in_party(party_id: str, partyParticipant_service: PartyParticipantService = Depends(get_partyParticipant_service)):
+    try:
+        participants = await partyParticipant_service.get_all_participants_in_party(party_id)
+        return participants
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.get("/{user_id}/all", response_model=list[PartyParticipantResponse], status_code=status.HTTP_200_OK)
+async def get_all_parties_for_user(user_id: str, partyParticipant_service: PartyParticipantService = Depends(get_partyParticipant_service)):
+    try:
+        parties = await partyParticipant_service.get_all_parties_for_user(user_id)
+        return parties
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
