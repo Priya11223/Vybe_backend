@@ -16,7 +16,7 @@ Create and activate the virtual environment on Windows:
 Set the database URL in the root .env file. Because the application uses
 SQLAlchemy's async engine, use the async PostgreSQL driver:
 
-	DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/vybe
+	DATABASE_URL=inside env
 
 Create a migration
 ------------------
