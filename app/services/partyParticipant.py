@@ -18,7 +18,8 @@ class PartyParticipantService():
         new_participant = PartyParticipant(
             party_id=participant.party_id,
             user_id=participant.user_id,
-            role=participant.role
+            role=participant.role,
+            status=participant.status
         )
         
         return await self.partyParticipantRepo.create(new_participant)

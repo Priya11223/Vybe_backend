@@ -12,6 +12,12 @@ from enum import Enum
 class PartyParticipantRole(str, Enum):
     HOST = "host"
     GUEST = "guest"
+    
+class Status(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    WITHDRAWN = "withdrawn"
 
 
 class PartyParticipant(Base):
@@ -36,6 +42,12 @@ class PartyParticipant(Base):
         SQLEnum(PartyParticipantRole),
         nullable=False,
         default=PartyParticipantRole.GUEST
+    )
+
+    status: Mapped[Status] = mapped_column(
+        SQLEnum(Status),
+        nullable=False,
+        default=Status.PENDING
     )
 
     __table_args__ = (
