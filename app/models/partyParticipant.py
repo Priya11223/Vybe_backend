@@ -1,23 +1,21 @@
 from app.db.database import Base
-from sqlalchemy import (
-    Date,
-    Enum as SQLEnum,
-    ForeignKey,
-    UniqueConstraint,
-)
-from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime
+from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 import uuid
 from enum import Enum
 
 class PartyParticipantRole(str, Enum):
     HOST = "host"
-    GUEST = "guest"
+    CO_HOST = "co_host"
+    MEMBER = "member"
     
-class Status(str, Enum):
-    PENDING = "pending"
-    ACCEPTED = "accepted"
-    DECLINED = "declined"
-    WITHDRAWN = "withdrawn"
+class PartyParticipantStatus(str, Enum):
+    INVITED = "invited"
+    CONFIRMED = "confirmed"
+    ATTENDED = "attended"
+    LEFT = "left"
+    REMOVED = "removed"
 
 
 class PartyParticipant(Base):
@@ -38,17 +36,15 @@ class PartyParticipant(Base):
         nullable=False
     )
     
-    role: Mapped[PartyParticipantRole] = mapped_column(
-        SQLEnum(PartyParticipantRole),
-        nullable=False,
-        default=PartyParticipantRole.GUEST
-    )
+    role: Mapped[PartyParticipantRole] = mapped_column(SQLEnum(PartyParticipantRole), nullable=False, default=PartyParticipantRole.MEMBER)
 
-    status: Mapped[Status] = mapped_column(
-        SQLEnum(Status),
-        nullable=False,
-        default=Status.PENDING
-    )
+    status: Mapped[PartyParticipantStatus] = mapped_column(SQLEnum(PartyParticipantStatus), nullable=False, default=PartyParticipantStatus.INVITED)
+    joined_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    left_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    party: Mapped["Party"] = relationship(back_populates="participants")
+    user: Mapped["User"] = relationship(back_populates="party_participations")
 
     __table_args__ = (
         UniqueConstraint("party_id", "user_id", name="unique_party_user"),
