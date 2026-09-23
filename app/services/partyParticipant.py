@@ -11,10 +11,20 @@ class PartyParticipantService():
         
     async def create_party_participant(self, participant: PartyParticipantCreate) -> PartyParticipantResponse:
         
-        existing = await self.partyParticipantRepo.get_by_id(participant.user_id)
+        # check if user and party exists
+        user_exists = await self.partyParticipantRepo.get_user_by_id(participant.user_id)
+        party_exists = await self.partyParticipantRepo.get_party_by_id(participant.party_id)
+        if user_exists is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        if party_exists is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Party not found")
+        
+        # check if user is already a participant in this party
+        existing = await self.partyParticipantRepo.get_by_user_id_and_party_id(participant.user_id, participant.party_id)
         if existing is not None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a participant in this party")
         
+
         new_participant = PartyParticipant(
             party_id=participant.party_id,
             user_id=participant.user_id,
@@ -38,3 +48,9 @@ class PartyParticipantService():
         
         await self.partyParticipantRepo.delete(existing)
         return PartyParticipantDeleteResponse(message="Party participant deleted successfully")
+
+    async def get_all_participants_in_party(self, party_id: uuid.UUID) -> list[PartyParticipantResponse]:
+        return await self.partyParticipantRepo.get_all_participants_in_party(party_id)
+
+    async def get_all_parties_for_user(self, user_id: uuid.UUID) -> list[PartyParticipantResponse]:
+        return await self.partyParticipantRepo.get_all_parties_for_user(user_id)
