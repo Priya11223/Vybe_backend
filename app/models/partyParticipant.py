@@ -1,9 +1,15 @@
-from app.db.database import Base
 from datetime import datetime
+from enum import Enum
+import uuid
+from typing import TYPE_CHECKING
+
+from app.db.database import Base
 from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-import uuid
-from enum import Enum
+
+if TYPE_CHECKING:
+    from app.models.party import Party
+    from app.models.user import User
 
 class PartyParticipantRole(str, Enum):
     HOST = "host"

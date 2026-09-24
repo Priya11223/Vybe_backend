@@ -1,10 +1,14 @@
 from datetime import datetime
 from enum import Enum
 import uuid
+from typing import TYPE_CHECKING
 
 from app.db.database import Base
 from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:
+    from app.models.party import Party
 
 
 class LocationVisibility(str, Enum):

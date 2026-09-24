@@ -1,9 +1,13 @@
 from datetime import datetime
 import uuid
+from typing import TYPE_CHECKING
 
 from app.db.database import Base
 from sqlalchemy import Boolean, DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:
+    from app.models.party import Party
 
 
 class PartyType(Base):
