@@ -1,0 +1,638 @@
+1. User
+
+The authentication/account-level entity.
+
+Attribute	Type	Key / Notes
+id	UUID	PK
+email	VARCHAR(255)	Unique, NOT NULL
+phone_number	VARCHAR(20)	Unique, nullable
+password_hash	VARCHAR	Nullable if OAuth-only
+auth_provider	ENUM	local/google/apple/etc.
+provider_user_id	VARCHAR	OAuth provider ID
+is_email_verified	BOOLEAN	Default false
+is_phone_verified	BOOLEAN	Default false
+status	ENUM	active/suspended/deleted
+last_login_at	TIMESTAMP	Nullable
+created_at	TIMESTAMP	
+updated_at	TIMESTAMP	
+deleted_at	TIMESTAMP	Soft delete
+
+Relationships
+
+User 1 : 1 UserProfile
+User 1 : N Party
+User 1 : N PartyParticipant
+User 1 : N PartyRequest
+User 1 : N PartyInvitation
+User 1 : N PartyComment
+User 1 : N PartyReaction
+User 1 : N PartyMedia
+User 1 : N Notification
+User 1 : N Report
+User 1 : N Block
+User 1 : 1 UserPreference
+User 1 : 1 Verification
+User 1 : N Payment
+User 1 : N Subscription
+2. UserProfile
+
+Public-facing profile information.
+
+Attribute	Type	Key / Notes
+id	UUID	PK
+user_id	UUID	FK → User.id, UNIQUE
+first_name	VARCHAR(100)	NOT NULL
+last_name	VARCHAR(100)	Nullable
+date_of_birth	DATE	
+gender	ENUM	
+bio	TEXT	
+profile_image_url	VARCHAR	
+city	VARCHAR(100)	
+occupation	VARCHAR(150)	
+relationship_status	ENUM	single/married/etc.
+created_at	TIMESTAMP	
+updated_at	TIMESTAMP	
+
+Relationship:
+
+User 1 ─── 1 UserProfile
+
+3. Party
+
+The central entity of Vybe.
+
+Attribute	Type	Key / Notes
+id	UUID	PK
+host_id	UUID	FK → User.id
+party_type_id	UUID	FK → PartyType.id
+party_category_id	UUID	FK → PartyCategory.id
+title	VARCHAR(200)	NOT NULL
+description	TEXT	
+start_time	TIMESTAMP	NOT NULL
+end_time	TIMESTAMP	
+max_participants	INTEGER	NOT NULL
+is_alcohol_allowed	BOOLEAN	
+alcohol_provided_by_host	BOOLEAN	
+food_provided_by_host	BOOLEAN	
+drinks_provided_by_host	BOOLEAN	
+status	ENUM	draft/published/ongoing/completed/cancelled
+visibility	ENUM	public/private/invite_only
+created_at	TIMESTAMP	
+updated_at	TIMESTAMP	
+cancelled_at	TIMESTAMP	Nullable
+
+Relationships:
+
+User 1 : N Party
+Party N : 1 PartyType
+Party N : 1 PartyCategory
+Party 1 : 1 PartyLocation
+Party 1 : N PartyRule
+Party 1 : N PartyRequirement
+Party 1 : N PartyParticipant
+Party 1 : N PartyInvitation
+Party 1 : N PartyRequest
+Party 1 : N PartyContribution
+Party 1 : N PartyComment
+Party 1 : N PartyReaction
+Party 1 : N PartyMedia
+Party 1 : N Report
+Party 1 : N Payment**
+4. PartyType
+
+Examples:
+
+House Party
+Club Party
+Birthday
+Pool Party
+Dinner
+Game Night
+Attribute	Type	Key / Notes
+id	UUID	PK
+name	VARCHAR(100)	Unique
+description	TEXT	
+is_active	BOOLEAN	
+created_at	TIMESTAMP	
+
+Relationship:
+
+PartyType 1 ─── N Party
+
+5. PartyCategory
+
+This is useful for broader categorization.
+
+Examples:
+
+Social
+Dating
+Networking
+Celebration
+Entertainment
+Attribute	Type
+id	UUID PK
+name	VARCHAR(100) UNIQUE
+description	TEXT
+is_active	BOOLEAN
+created_at	TIMESTAMP
+
+Relationship:
+
+PartyCategory 1 ─── N Party
+
+6. PartyLocation
+
+Don't store the complete address directly inside Party.
+
+Attribute	Type	Key / Notes
+id	UUID	PK
+party_id	UUID	FK → Party.id, UNIQUE
+address_line_1	VARCHAR	
+address_line_2	VARCHAR	
+city	VARCHAR	
+state	VARCHAR	
+country	VARCHAR	
+postal_code	VARCHAR	
+latitude	DECIMAL	
+longitude	DECIMAL	
+location_visibility	ENUM	exact/approximate/hidden
+created_at	TIMESTAMP	
+
+Relationship:
+
+Party 1 ─── 1 PartyLocation
+
+The location_visibility is important because hosts may not want their exact home address exposed publicly.
+
+7. PartyRule
+
+Rules imposed by the host.
+
+Examples:
+
+Singles only
+Couples only
+Married only
+Female only
+Male only
+Age 21+
+Friends only
+Attribute	Type
+id	UUID PK
+party_id	UUID FK → Party.id
+rule_type	ENUM
+rule_value	VARCHAR
+description	TEXT
+created_at	TIMESTAMP
+
+Example:
+
+party_id = P1
+rule_type = GENDER
+rule_value = FEMALE
+
+Relationship:
+
+Party 1 ─── N PartyRule
+
+8. PartyRequirement
+
+Things the host asks participants to bring/do.
+
+Examples:
+
+Bring alcohol
+Bring snacks
+Bring ID
+Bring board games
+Bring swimming clothes
+Attribute	Type
+id	UUID PK
+party_id	UUID FK → Party.id
+title	VARCHAR(150)
+description	TEXT
+requirement_type	ENUM
+is_mandatory	BOOLEAN
+created_at	TIMESTAMP
+
+Relationship:
+
+Party 1 ─── N PartyRequirement
+
+9. PartyParticipant
+
+This is one of the most important tables.
+
+It represents the many-to-many relationship between User and Party.
+
+Attribute	Type	Key / Notes
+id	UUID	PK
+party_id	UUID	FK → Party.id
+user_id	UUID	FK → User.id
+role	ENUM	host/co_host/member
+status	ENUM	invited/confirmed/attended/left/removed
+joined_at	TIMESTAMP	
+left_at	TIMESTAMP	
+created_at	TIMESTAMP	
+
+Important constraint:
+
+UNIQUE(party_id, user_id)
+
+Relationship:
+
+User N ─── M Party
+        via PartyParticipant
+
+Although the host is technically represented here too, the Party.host_id is retained because it gives us a direct and efficient way to identify the owner.
+
+10. PartyInvitation
+
+Used when a host/co-host directly invites someone.
+
+Attribute	Type
+id	UUID PK
+party_id	UUID FK → Party.id
+inviter_id	UUID FK → User.id
+invitee_id	UUID FK → User.id
+status	ENUM
+message	TEXT
+expires_at	TIMESTAMP
+responded_at	TIMESTAMP
+created_at	TIMESTAMP
+
+Possible status:
+
+PENDING
+ACCEPTED
+DECLINED
+EXPIRED
+CANCELLED
+11. PartyRequest
+
+When a user wants to join a party.
+
+Attribute	Type
+id	UUID PK
+party_id	UUID FK → Party.id
+user_id	UUID FK → User.id
+message	TEXT
+status	ENUM
+reviewed_by	UUID FK → User.id
+reviewed_at	TIMESTAMP
+created_at	TIMESTAMP
+
+Status:
+
+PENDING
+APPROVED
+REJECTED
+CANCELLED
+
+Relationships:
+
+User 1:N PartyRequest
+Party 1:N PartyRequest
+User 1:N PartyRequest as reviewer
+12. PartyContribution
+
+Tracks what a participant has committed to provide.
+
+Example:
+
+Rahul → 2 bottles of soft drink
+Ankit → Snacks
+Priya → Cake
+
+Attribute	Type
+id	UUID PK
+party_id	UUID FK → Party.id
+user_id	UUID FK → User.id
+requirement_id	UUID FK → PartyRequirement.id, nullable
+status	ENUM
+notes	TEXT
+created_at	TIMESTAMP
+updated_at	TIMESTAMP
+
+Relationship:
+
+User 1:N PartyContribution
+
+Party 1:N PartyContribution
+
+13. PartyContributionItem
+
+Actual item being contributed.
+
+Attribute	Type
+id	UUID PK
+contribution_id	UUID FK → PartyContribution.id
+name	VARCHAR(150)
+quantity	DECIMAL
+unit	VARCHAR(50)
+description	TEXT
+estimated_value	DECIMAL
+created_at	TIMESTAMP
+
+Relationship:
+
+PartyContribution 1 ─── N PartyContributionItem
+14. PartyComment
+
+Comments/discussion associated with a party.
+
+Attribute	Type
+id	UUID PK
+party_id	UUID FK → Party.id
+user_id	UUID FK → User.id
+parent_comment_id	UUID FK → PartyComment.id, nullable
+content	TEXT
+status	ENUM
+created_at	TIMESTAMP
+updated_at	TIMESTAMP
+deleted_at	TIMESTAMP
+
+parent_comment_id allows:
+
+Comment
+ ├── Reply
+ │    └── Reply
+15. PartyReaction
+
+Likes/reactions on a party.
+
+Attribute	Type
+id	UUID PK
+party_id	UUID FK → Party.id
+user_id	UUID FK → User.id
+reaction_type	ENUM
+created_at	TIMESTAMP
+
+Constraint:
+
+UNIQUE(party_id, user_id)
+
+If multiple reaction types are allowed simultaneously, remove this constraint and use:
+
+UNIQUE(party_id, user_id, reaction_type)
+16. PartyMedia
+
+Images/videos associated with a party.
+
+Attribute	Type
+id	UUID PK
+party_id	UUID FK → Party.id
+uploaded_by	UUID FK → User.id
+media_type	ENUM
+media_url	VARCHAR
+thumbnail_url	VARCHAR
+caption	VARCHAR
+display_order	INTEGER
+created_at	TIMESTAMP
+
+Media type:
+
+IMAGE
+VIDEO
+17. Notification
+
+System notifications.
+
+Attribute	Type
+id	UUID PK
+user_id	UUID FK → User.id
+type	ENUM
+title	VARCHAR
+message	TEXT
+reference_type	VARCHAR
+reference_id	UUID
+is_read	BOOLEAN
+read_at	TIMESTAMP
+created_at	TIMESTAMP
+
+reference_type/reference_id can point to:
+
+PARTY
+PARTY_REQUEST
+PARTY_INVITATION
+COMMENT
+PAYMENT
+
+This is a polymorphic reference, so there isn't a traditional FK for reference_id.
+
+18. Report
+
+Users can report parties/users/comments/media.
+
+Attribute	Type
+id	UUID PK
+reported_by	UUID FK → User.id
+reported_user_id	UUID FK → User.id, nullable
+party_id	UUID FK → Party.id, nullable
+reason	ENUM
+description	TEXT
+status	ENUM
+reviewed_by	UUID FK → User.id, nullable
+reviewed_at	TIMESTAMP
+created_at	TIMESTAMP
+
+At least one target should be present:
+
+reported_user_id
+OR
+party_id
+
+Could later be expanded to support comment/media reports.
+
+19. Block
+
+User blocking another user.
+
+Attribute	Type
+id	UUID PK
+blocker_id	UUID FK → User.id
+blocked_id	UUID FK → User.id
+created_at	TIMESTAMP
+
+Constraint:
+
+UNIQUE(blocker_id, blocked_id)
+
+Relationship:
+
+User N ─── M User
+       via Block
+
+This is a self-referencing relationship.
+
+20. UserPreference
+
+Personal application preferences.
+
+Attribute	Type
+id	UUID PK
+user_id	UUID FK → User.id, UNIQUE
+allow_notifications	BOOLEAN
+allow_email_notifications	BOOLEAN
+allow_push_notifications	BOOLEAN
+show_profile	BOOLEAN
+show_online_status	BOOLEAN
+preferred_party_radius	INTEGER
+created_at	TIMESTAMP
+updated_at	TIMESTAMP
+21. Verification
+
+Identity/account verification.
+
+Attribute	Type
+id	UUID PK
+user_id	UUID FK → User.id
+verification_type	ENUM
+status	ENUM
+verification_reference	VARCHAR
+verified_at	TIMESTAMP
+expires_at	TIMESTAMP
+created_at	TIMESTAMP
+
+Types:
+
+EMAIL
+PHONE
+IDENTITY
+AGE
+22. Payment
+
+For paid parties, contributions, subscriptions, etc.
+
+Attribute	Type
+id	UUID PK
+user_id	UUID FK → User.id
+party_id	UUID FK → Party.id, nullable
+amount	DECIMAL(12,2)
+currency	VARCHAR(3)
+payment_provider	ENUM
+provider_payment_id	VARCHAR
+payment_type	ENUM
+status	ENUM
+paid_at	TIMESTAMP
+created_at	TIMESTAMP
+
+Possible payment types:
+
+PARTY_ENTRY
+CONTRIBUTION
+SUBSCRIPTION
+REFUND
+23. Subscription
+
+If Vybe later has premium memberships.
+
+Attribute	Type
+id	UUID PK
+user_id	UUID FK → User.id
+plan_name	VARCHAR
+provider	VARCHAR
+provider_subscription_id	VARCHAR
+status	ENUM
+start_date	TIMESTAMP
+end_date	TIMESTAMP
+auto_renew	BOOLEAN
+created_at	TIMESTAMP
+updated_at	TIMESTAMP
+24. AuditLog
+
+Tracks important system actions.
+
+Attribute	Type
+id	UUID PK
+user_id	UUID FK → User.id, nullable
+action	VARCHAR
+entity_type	VARCHAR
+entity_id	UUID
+old_values	JSONB
+new_values	JSONB
+ip_address	INET
+user_agent	TEXT
+created_at	TIMESTAMP
+
+Useful for:
+
+admin operations
+security
+debugging
+moderation
+compliance
+Relationship Summary
+
+Here's the important part for your ER diagram.
+
+Relationship	Cardinality
+User → UserProfile	1 : 1
+User → Party	1 : N
+PartyType → Party	1 : N
+PartyCategory → Party	1 : N
+Party → PartyLocation	1 : 1
+Party → PartyRule	1 : N
+Party → PartyRequirement	1 : N
+User ↔ Party	M : N via PartyParticipant
+Party → PartyInvitation	1 : N
+User → PartyInvitation	1 : N as inviter/invitee
+Party → PartyRequest	1 : N
+User → PartyRequest	1 : N
+Party → PartyParticipant	1 : N
+User → PartyParticipant	1 : N
+Party → PartyContribution	1 : N
+User → PartyContribution	1 : N
+PartyContribution → PartyContributionItem	1 : N
+Party → PartyComment	1 : N
+User → PartyComment	1 : N
+PartyComment → PartyComment	1 : N self-reference
+Party → PartyReaction	1 : N
+User → PartyReaction	1 : N
+Party → PartyMedia	1 : N
+User → PartyMedia	1 : N
+User → Notification	1 : N
+User → Report	1 : N
+Party → Report	1 : N
+User ↔ User	M : N via Block
+User → UserPreference	1 : 1
+User → Verification	1 : N
+User → Payment	1 : N
+Party → Payment	1 : N
+User → Subscription	1 : N
+User → AuditLog	1 : N
+
+
+Phase 1
+
+User
+UserProfile
+Party
+PartyType
+PartyCategory
+PartyLocation
+PartyRule
+PartyRequirement
+PartyParticipant
+PartyRequest
+
+Phase 2
+
+PartyInvitation
+PartyContribution
+PartyContributionItem
+PartyComment
+PartyReaction
+PartyMedia
+Notification
+Block
+Report
+
+Phase 3
+
+Verification
+Payment
+Subscription
+AuditLog
+UserPreference

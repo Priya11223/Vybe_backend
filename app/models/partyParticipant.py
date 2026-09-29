@@ -1,17 +1,27 @@
-from app.db.database import Base
-from sqlalchemy import (
-    Date,
-    Enum as SQLEnum,
-    ForeignKey,
-    UniqueConstraint,
-)
-from sqlalchemy.orm import Mapped, mapped_column
-import uuid
+from datetime import datetime
 from enum import Enum
+import uuid
+from typing import TYPE_CHECKING
+
+from app.db.database import Base
+from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:
+    from app.models.party import Party
+    from app.models.user import User
 
 class PartyParticipantRole(str, Enum):
     HOST = "host"
-    GUEST = "guest"
+    CO_HOST = "co_host"
+    MEMBER = "member"
+    
+class PartyParticipantStatus(str, Enum):
+    INVITED = "invited"
+    CONFIRMED = "confirmed"
+    ATTENDED = "attended"
+    LEFT = "left"
+    REMOVED = "removed"
 
 
 class PartyParticipant(Base):
@@ -32,11 +42,15 @@ class PartyParticipant(Base):
         nullable=False
     )
     
-    role: Mapped[PartyParticipantRole] = mapped_column(
-        SQLEnum(PartyParticipantRole),
-        nullable=False,
-        default=PartyParticipantRole.GUEST
-    )
+    role: Mapped[PartyParticipantRole] = mapped_column(SQLEnum(PartyParticipantRole), nullable=False, default=PartyParticipantRole.MEMBER)
+
+    status: Mapped[PartyParticipantStatus] = mapped_column(SQLEnum(PartyParticipantStatus), nullable=False, default=PartyParticipantStatus.INVITED)
+    joined_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    left_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    party: Mapped["Party"] = relationship(back_populates="participants")
+    user: Mapped["User"] = relationship(back_populates="party_participations")
 
     __table_args__ = (
         UniqueConstraint("party_id", "user_id", name="unique_party_user"),
