@@ -1,12 +1,13 @@
 from fastapi import APIRouter
 
-from app.api.v1.routes import user, party, partyParticipant
+from app.api.v1.routes import user, party, partyParticipant, auth
 
 router = APIRouter(prefix="/v1")
 
 router.include_router(user.router)
 router.include_router(party.router)
 router.include_router(partyParticipant.router)
+router.include_router(auth.router)
 
 def get_router() -> APIRouter:
     return router

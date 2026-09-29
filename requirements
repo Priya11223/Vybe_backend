@@ -7,3 +7,5 @@ bcrypt
 email-validator
 alembic
 asyncpg
+pwdlib
+PyJWT

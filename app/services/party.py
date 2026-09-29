@@ -1,3 +1,4 @@
+from app.models.user import User
 import uuid
 from fastapi import status
 from app.repositories.party import PartyRepository
@@ -9,16 +10,16 @@ class PartyService():
     def __init__(self, partyRepo: PartyRepository):
         self.partyRepo = partyRepo
         
-    async def create_party(self, party: PartyCreate) -> PartyResponse:
-        new_party = Party(hosted_by=party.hosted_by)
+    async def create_party(self, party: PartyCreate, host: User) -> PartyResponse:
+        new_party = Party(hosted_by=host.id, description=party.description, start_time=party.start_time, end_time=party.end_time)
         res = await self.partyRepo.create(new_party)
-        return PartyResponse(id=res.id, hosted_by=res.hosted_by)
+        return PartyResponse.model_validate(res)
     
     async def get_party_by_id(self, party_id: uuid.UUID) -> PartyResponse:
         res = await self.partyRepo.get_by_id(party_id)
         if res is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Party not found")
-        return PartyResponse(id=res.id, hosted_by=res.hosted_by)
+        return PartyResponse.model_validate(res)
     
     async def delete_party(self, party: PartyDeleteRequest) -> PartyDeleteResponse:
         existing = await self.partyRepo.get_by_id(party_id=party.id)

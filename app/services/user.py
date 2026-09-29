@@ -4,6 +4,7 @@ from app.repositories.user import UserRepository
 from app.schemas.user import *
 from fastapi import HTTPException
 from app.models.user import User
+from app.core.security import hash_password
 
 class UserService:
     def __init__(self, userRepo: UserRepository):
@@ -14,7 +15,8 @@ class UserService:
         if temp_user:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
         
-        new_user = User(name=user.name, email=user.email, username=user.username, hashed_password=user.password)
+        hash_pass = hash_password(user.password)
+        new_user = User(name=user.name, email=user.email, username=user.username, hashed_password=hash_pass)
         return await self.userRepo.create(new_user)
 
     async def get_user_by_email(self, email: str) -> UserResponse:
